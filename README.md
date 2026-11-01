@@ -8,7 +8,7 @@
 
 An independent, one-page Blinkit-inspired storefront. Made to learn, made with care, and made a little more fun than a list of products probably needs to be.
 
-<a href="https://xc0d3f4th3r.github.io/BLINKIT-CLONE/"><strong>✦ OPEN THE LIVE STORE ✦</strong></a>
+<a href="https://xc0d3f4th3r.github.io/BLINKIT-CLONE/"><strong>✦ LIVE PREVIEW (AFTER PAGES SETUP) ✦</strong></a>
 &nbsp;&nbsp;·&nbsp;&nbsp;
 <a href="#-run-it-yourself">Run it yourself</a>
 &nbsp;&nbsp;·&nbsp;&nbsp;
@@ -95,12 +95,12 @@ Found something wonky? Have an idea? Issues and kind suggestions are very welcom
 
 ## 🚀 Put it on the internet
 
-This repository includes a GitHub Actions workflow that publishes the static storefront to GitHub Pages on every push to `main`.
+This repository includes a GitHub Actions workflow that publishes the static storefront to GitHub Pages on every push to `main`. GitHub does not let the workflow turn Pages on for this repository by itself, so the owner needs to enable Pages once:
 
 1. Open **Settings → Pages** in the repository.
 2. Set the build and deployment source to **GitHub Actions** if it is not already selected.
-3. Check the **Actions** tab for the first deployment.
-4. Say hello to your live store: **[xc0d3f4th3r.github.io/BLINKIT-CLONE](https://xc0d3f4th3r.github.io/BLINKIT-CLONE/)**.
+3. Open **Actions → Publish storefront** and rerun the latest workflow (or push a new commit).
+4. Once it finishes, say hello to your live store: **[xc0d3f4th3r.github.io/BLINKIT-CLONE](https://xc0d3f4th3r.github.io/BLINKIT-CLONE/)**.
 
 <div align="center">
 
