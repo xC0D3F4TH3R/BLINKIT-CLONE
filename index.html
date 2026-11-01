@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f7f8f2">
+  <title>blinkit — groceries, minus the wait</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+    :root {
+      --ink: #17231b;
+      --muted: #788078;
+      --green: #164b32;
+      --lime: #c9f461;
+      --paper: #f7f8f2;
+      --line: #e8ebe2;
+      --white: #fff;
+      --shadow: 0 16px 42px rgba(27, 51, 35, .09);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "DM Sans", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .page { max-width: 1440px; margin: auto; overflow: hidden; }
+    .top-note {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 6px 16px;
+      background: var(--green);
+      color: white;
+      font-size: 11px;
+      letter-spacing: .035em;
+    }
+    .top-note strong { color: var(--lime); }
+    .header {
+      position: sticky;
+      z-index: 10;
+      top: 0;
+      display: grid;
+      grid-template-columns: auto minmax(230px, 1fr) minmax(220px, 1.15fr) auto;
+      align-items: center;
+      gap: 30px;
+      min-height: 82px;
+      padding: 0 clamp(20px, 5vw, 72px);
+      background: rgba(247, 248, 242, .93);
+      border-bottom: 1px solid rgba(232, 235, 226, .8);
+      backdrop-filter: blur(16px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--green);
+      text-decoration: none;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 27px;
+      font-weight: 700;
+      letter-spacing: -1.7px;
+    }
+    .brand-mark {
+      display: grid;
+      width: 31px;
+      height: 31px;
+      place-items: center;
+      border-radius: 10px 10px 10px 3px;
+      background: var(--lime);
+      color: var(--green);
+      font-size: 19px;
+      transform: rotate(-7deg);
+    }
+    .delivery { line-height: 1.25; }
+    .delivery small {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+    .delivery button {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .delivery button span { color: var(--green); }
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      height: 46px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: #788078;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .search:focus-within { border-color: #9dc848; box-shadow: 0 0 0 3px rgba(201, 244, 97, .24); }
+    .search svg { flex: 0 0 auto; }
+    .search input { width: 100%; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 12px; }
+    .search input::placeholder { color: #969d95; }
+    .header-actions { display: flex; align-items: center; gap: 15px; }
+    .login {
+      padding: 10px 4px;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .cart-button {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 105px;
+      padding: 12px 15px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--green);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      transition: transform .2s, background .2s;
+    }
+    .cart-button:hover { background: #236541; transform: translateY(-2px); }
+    .cart-count {
+      display: none;
+      position: absolute;
+      top: -7px;
+      left: -7px;
+      width: 20px;
+      height: 20px;
+      place-items: center;
+      border: 2px solid var(--paper);
+      border-radius: 50%;
+      background: var(--lime);
+      color: var(--green);
+      font-size: 10px;
+    }
+    .cart-count.visible { display: grid; }
+
+    main { padding: 0 clamp(20px, 5vw, 72px) 65px; }
+    .hero {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      align-items: center;
+      min-height: 370px;
+      margin-top: 28px;
+      padding: 50px clamp(28px, 6vw, 84px);
+      overflow: hidden;
+      border-radius: 25px;
+      background: #e8f4d0;
+    }
+    .hero::before, .hero::after {
+      position: absolute;
+      content: "";
+      border: 1px solid rgba(22, 75, 50, .09);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .hero::before { width: 540px; height: 540px; right: 6%; top: -315px; }
+    .hero::after { width: 420px; height: 420px; right: 11%; bottom: -315px; }
+    .hero-copy { position: relative; z-index: 2; max-width: 470px; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 11px;
+      border: 1px solid rgba(22, 75, 50, .14);
+      border-radius: 30px;
+      background: rgba(255,255,255,.52);
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .045em;
+      text-transform: uppercase;
+    }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #48a857; box-shadow: 0 0 0 3px rgba(72, 168, 87, .15); }
+    h1 {
+      max-width: 460px;
+      margin: 20px 0 14px;
+      color: var(--green);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(42px, 5.4vw, 72px);
+      line-height: .98;
+      letter-spacing: -4px;
+    }
+    h1 em { color: #83aa36; font-style: normal; }
+    .hero-copy p { max-width: 360px; margin: 0; color: #59715e; font-size: 14px; line-height: 1.65; }
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 26px;
+      padding: 13px 17px;
+      border: 0;
+      border-radius: 11px;
+      background: var(--green);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform .2s;
+    }
+    .hero-cta:hover { transform: translateY(-2px); }
+    .hero-cta span { color: var(--lime); font-size: 17px; }
+    .hero-art {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      min-height: 265px;
+      place-items: center;
+    }
+    .produce-orbit {
+      position: relative;
+      display: grid;
+      width: min(290px, 72vw);
+      height: min(290px, 72vw);
+      place-items: center;
+      border: 1px solid rgba(22, 75, 50, .12);
+      border-radius: 50%;
+      background: rgba(255,255,255,.44);
+      box-shadow: 0 25px 55px rgba(66, 104, 49, .08);
+    }
+    .produce-orbit::before {
+      position: absolute;
+      inset: 18px;
+      border: 1px dashed rgba(22, 75, 50, .16);
+      border-radius: 50%;
+      content: "";
+    }
+    .produce-main { font-size: 125px; filter: drop-shadow(0 18px 10px rgba(59, 82, 33, .13)); transform: rotate(-10deg); }
+    .float-produce {
+      position: absolute;
+      display: grid;
+      width: 62px;
+      height: 62px;
+      place-items: center;
+      border: 1px solid rgba(22, 75, 50, .1);
+      border-radius: 19px;
+      background: white;
+      box-shadow: 0 12px 28px rgba(31, 59, 37, .1);
+      font-size: 31px;
+      animation: bob 3.2s ease-in-out infinite;
+    }
+    .float-one { top: 10px; left: 18px; transform: rotate(-10deg); }
+    .float-two { right: 0; bottom: 42px; animation-delay: .7s; }
+    .float-three { left: 14px; bottom: 27px; animation-delay: 1.3s; }
+    .delivery-tag {
+      position: absolute;
+      right: -34px;
+      bottom: 30px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 13px;
+      border: 1px solid rgba(22,75,50,.08);
+      border-radius: 12px;
+      background: white;
+      box-shadow: var(--shadow);
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 700;
+      transform: rotate(3deg);
+    }
+    .delivery-tag strong { font-size: 14px; }
+    @keyframes bob { 0%, 100% { margin-top: 0; } 50% { margin-top: -9px; } }
+
+    .perks {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 22px 0 44px;
+    }
+    .perk {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 68px;
+      padding: 12px 17px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255,255,255,.68);
+    }
+    .perk-icon { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; border-radius: 11px; background: #eff5e4; font-size: 17px; }
+    .perk strong { display: block; margin-bottom: 3px; font-size: 11px; }
+    .perk span { color: var(--muted); font-size: 10px; }
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 17px;
+    }
+    .section-heading h2 {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(22px, 3vw, 29px);
+      letter-spacing: -1.15px;
+    }
+    .section-heading p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+    .text-link { padding: 8px 0; border: 0; background: transparent; color: var(--green); font-size: 11px; font-weight: 700; }
+
+    .category-row {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(80px, 1fr));
+      gap: 11px;
+      margin-bottom: 43px;
+    }
+    .category {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+      padding: 15px 7px 12px;
+      border: 1px solid transparent;
+      border-radius: 15px;
+      background: white;
+      color: var(--ink);
+      font-size: 10px;
+      font-weight: 600;
+      transition: transform .2s, border-color .2s, background .2s;
+    }
+    .category:hover, .category.active { border-color: #b7d77c; background: #f0f7df; transform: translateY(-2px); }
+    .category-icon { display: grid; width: 51px; height: 51px; place-items: center; border-radius: 16px; background: #f5f7ef; font-size: 26px; }
+    .category.active .category-icon { background: white; }
+
+    .deal-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin: 0 0 20px;
+      padding: 18px 22px;
+      border-radius: 15px;
+      background: #173c2b;
+      color: white;
+    }
+    .deal-left { display: flex; align-items: center; gap: 13px; }
+    .deal-spark { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; border-radius: 12px; background: rgba(201,244,97,.16); color: var(--lime); font-size: 20px; }
+    .deal-strip strong { display: block; margin-bottom: 3px; font-family: "Space Grotesk", sans-serif; font-size: 14px; }
+    .deal-strip small { color: #bdcabc; font-size: 10px; }
+    .deal-toggle {
+      position: relative;
+      width: 43px;
+      height: 24px;
+      flex: 0 0 auto;
+      border: 0;
+      border-radius: 20px;
+      background: #526457;
+      transition: background .2s;
+    }
+    .deal-toggle::after { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: white; content: ""; transition: transform .2s; }
+    .deal-toggle.on { background: #a4d64c; }
+    .deal-toggle.on::after { transform: translateX(19px); }
+    .product-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; }
+    .product-card {
+      position: relative;
+      min-width: 0;
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: white;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+    }
+    .product-card:hover { border-color: #d7e3c2; box-shadow: 0 12px 30px rgba(31, 59, 37, .07); transform: translateY(-3px); }
+    .product-image {
+      position: relative;
+      display: grid;
+      height: 155px;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 11px;
+      background: #f5f6ef;
+    }
+    .product-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .35s; }
+    .product-card:hover .product-image img { transform: scale(1.05); }
+    .product-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 5px 7px;
+      border-radius: 6px;
+      background: var(--green);
+      color: white;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .favorite {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      display: grid;
+      width: 29px;
+      height: 29px;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,.94);
+      color: #778078;
+      font-size: 16px;
+      transition: color .2s, transform .2s;
+    }
+    .favorite:hover { transform: scale(1.1); }
+    .favorite.saved { color: #e35b63; }
+    .product-info { padding: 11px 2px 2px; }
+    .product-time { display: flex; align-items: center; gap: 4px; margin-bottom: 7px; color: #737d74; font-size: 9px; }
+    .product-time span { color: #5a8650; }
+    .product-info h3 { min-height: 34px; margin: 0; font-size: 12px; line-height: 1.4; }
+    .product-qty { display: block; margin: 4px 0 12px; color: var(--muted); font-size: 10px; }
+    .product-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .price { font-size: 13px; font-weight: 700; }
+    .old-price { margin-left: 4px; color: #969d95; font-size: 9px; font-weight: 400; text-decoration: line-through; }
+    .add-button {
+      min-width: 55px;
+      padding: 7px 12px;
+      border: 1px solid #a8c877;
+      border-radius: 7px;
+      background: #fafff0;
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 700;
+      transition: background .2s;
+    }
+    .add-button:hover { background: var(--lime); }
+    .empty-state { grid-column: 1/-1; padding: 50px 20px; border: 1px dashed #cbd4c3; border-radius: 16px; color: var(--muted); text-align: center; }
+    .empty-state strong { display: block; margin-bottom: 7px; color: var(--green); font-size: 16px; }
+    .fresh-note {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 22px;
+      margin-top: 48px;
+      padding: 25px 29px;
+      border: 1px solid #e1e9d5;
+      border-radius: 17px;
+      background: #eff5e5;
+    }
+    .fresh-note h2 { margin: 0 0 7px; font-family: "Space Grotesk", sans-serif; font-size: 19px; letter-spacing: -.5px; }
+    .fresh-note p { max-width: 520px; margin: 0; color: #657369; font-size: 11px; line-height: 1.6; }
+    .note-signature { color: #557648; font-family: "Space Grotesk", sans-serif; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 24px clamp(20px, 5vw, 72px) 32px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 10px;
+    }
+    footer strong { color: var(--green); }
+
+    .overlay {
+      position: fixed;
+      z-index: 30;
+      inset: 0;
+      visibility: hidden;
+      background: rgba(15, 29, 19, .35);
+      opacity: 0;
+      transition: opacity .25s, visibility .25s;
+    }
+    .overlay.open { visibility: visible; opacity: 1; }
+    .cart-drawer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      display: flex;
+      width: min(410px, 100%);
+      height: 100%;
+      flex-direction: column;
+      padding: 23px;
+      background: var(--paper);
+      box-shadow: -15px 0 50px rgba(0,0,0,.12);
+      transform: translateX(100%);
+      transition: transform .3s ease;
+    }
+    .overlay.open .cart-drawer { transform: translateX(0); }
+    .drawer-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .drawer-head h2 { margin: 0; font-family: "Space Grotesk", sans-serif; font-size: 22px; }
+    .close-button { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: white; color: var(--ink); font-size: 18px; }
+    .free-delivery { margin: 16px 0; padding: 12px; border-radius: 10px; background: #eaf3dc; color: var(--green); font-size: 10px; line-height: 1.5; }
+    .cart-items { flex: 1; overflow: auto; }
+    .cart-empty { display: grid; min-height: 250px; place-content: center; color: var(--muted); text-align: center; }
+    .cart-empty span { margin-bottom: 10px; font-size: 36px; }
+    .cart-empty strong { margin-bottom: 5px; color: var(--green); font-size: 14px; }
+    .cart-row { display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .cart-row img { width: 48px; height: 48px; border-radius: 9px; object-fit: cover; }
+    .cart-row strong { display: block; margin-bottom: 5px; font-size: 10px; }
+    .cart-row small { color: var(--muted); font-size: 9px; }
+    .quantity-control { display: flex; align-items: center; gap: 8px; padding: 4px; border: 1px solid #c8d8ae; border-radius: 7px; background: #f9fff0; color: var(--green); font-size: 10px; }
+    .quantity-control button { width: 16px; height: 17px; padding: 0; border: 0; background: transparent; color: var(--green); font-weight: 700; }
+    .cart-footer { padding-top: 15px; border-top: 1px solid var(--line); }
+    .bill-row { display: flex; justify-content: space-between; margin: 8px 0; color: #657068; font-size: 11px; }
+    .bill-row.total { margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--ink); font-size: 14px; font-weight: 700; }
+    .checkout {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 15px;
+      padding: 15px;
+      border: 0;
+      border-radius: 11px;
+      background: var(--green);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .toast {
+      position: fixed;
+      z-index: 40;
+      bottom: 25px;
+      left: 50%;
+      padding: 12px 17px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 10px;
+      background: #173c2b;
+      box-shadow: var(--shadow);
+      color: white;
+      font-size: 11px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 12px);
+      transition: opacity .2s, transform .2s;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .mobile-cart { display: none; }
+
+    @media (max-width: 920px) {
+      .header { grid-template-columns: auto 1fr auto; gap: 17px; padding: 0 24px; }
+      .delivery { display: none; }
+      .search { grid-column: 2; grid-row: 1; }
+      .header-actions { grid-column: 3; grid-row: 1; }
+      .login { display: none; }
+      main { padding-right: 24px; padding-left: 24px; }
+      .product-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+      .category-row { grid-template-columns: repeat(4, 1fr); }
+      .hero { min-height: 330px; padding: 40px; }
+      .produce-orbit { width: 240px; height: 240px; }
+      .produce-main { font-size: 105px; }
+      .delivery-tag { right: -20px; }
+    }
+    @media (max-width: 620px) {
+      .top-note { font-size: 9px; }
+      .header { grid-template-columns: auto 1fr auto; gap: 10px; min-height: 66px; padding: 0 16px; }
+      .brand { gap: 6px; font-size: 22px; }
+      .brand-mark { width: 27px; height: 27px; font-size: 16px; }
+      .search { grid-column: 1 / -1; grid-row: 2; height: 42px; margin-bottom: 11px; }
+      .header { padding-top: 10px; }
+      .header-actions { grid-column: 3; grid-row: 1; }
+      .cart-button { min-width: 40px; justify-content: center; padding: 10px; }
+      .cart-button .cart-label { display: none; }
+      main { padding: 0 16px 42px; }
+      .hero { grid-template-columns: 1fr; min-height: 0; margin-top: 16px; padding: 28px 23px 0; }
+      .hero-copy { max-width: none; }
+      h1 { max-width: 340px; margin: 17px 0 10px; font-size: clamp(44px, 13vw, 62px); letter-spacing: -3px; }
+      .hero-copy p { max-width: 290px; font-size: 12px; }
+      .hero-cta { margin-top: 18px; padding: 11px 14px; }
+      .hero-art { min-height: 220px; margin-top: 4px; }
+      .produce-orbit { width: 205px; height: 205px; }
+      .produce-main { font-size: 90px; }
+      .float-produce { width: 49px; height: 49px; border-radius: 15px; font-size: 25px; }
+      .delivery-tag { right: -33px; bottom: 17px; padding: 8px 10px; font-size: 9px; }
+      .perks { grid-template-columns: 1fr; gap: 8px; margin: 13px 0 36px; }
+      .perk { min-height: 57px; padding: 9px 13px; }
+      .perk-icon { width: 33px; height: 33px; }
+      .section-heading { align-items: center; }
+      .section-heading h2 { font-size: 23px; }
+      .category-row { grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin-bottom: 33px; }
+      .category { gap: 7px; padding: 10px 4px; font-size: 9px; }
+      .category-icon { width: 45px; height: 45px; font-size: 23px; }
+      .deal-strip { padding: 14px; }
+      .deal-strip strong { font-size: 12px; }
+      .deal-strip small { font-size: 9px; }
+      .deal-spark { width: 35px; height: 35px; }
+      .product-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
+      .product-card { padding: 8px; border-radius: 13px; }
+      .product-image { height: 128px; }
+      .product-info { padding-top: 9px; }
+      .product-info h3 { font-size: 11px; }
+      .product-qty { margin-bottom: 10px; font-size: 9px; }
+      .price { font-size: 12px; }
+      .add-button { min-width: 49px; padding: 7px 9px; font-size: 9px; }
+      .fresh-note { grid-template-columns: 1fr; gap: 14px; margin-top: 33px; padding: 20px; }
+      .note-signature { text-align: right; }
+      footer { padding: 21px 16px 80px; font-size: 9px; }
+      .mobile-cart {
+        position: fixed;
+        z-index: 12;
+        right: 16px;
+        bottom: 15px;
+        left: 16px;
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 15px;
+        border: 1px solid rgba(255,255,255,.2);
+        border-radius: 13px;
+        background: var(--green);
+        box-shadow: 0 10px 30px rgba(22,75,50,.23);
+        color: white;
+      }
+      .mobile-cart.show { display: flex; }
+      .mobile-cart strong { font-size: 12px; }
+      .mobile-cart span { color: #d9e8d1; font-size: 10px; }
+      .mobile-cart button { padding: 8px 12px; border: 0; border-radius: 8px; background: var(--lime); color: var(--green); font-size: 10px; font-weight: 700; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="top-note"><span>✦</span> Fresh finds, fast rides. <strong>Free delivery on your first order</strong> <span>✦</span></div>
+    <header class="header">
+      <a class="brand" href="#" aria-label="blinkit home"><span class="brand-mark">b</span> blinkit</a>
+      <div class="delivery">
+        <small>Delivering to</small>
+        <button id="locationButton">🏠 <span>Indiranagar, Bengaluru</span>⌄</button>
+      </div>
+      <label class="search">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="searchInput" type="search" placeholder="Search for atta, milk, a little treat..." autocomplete="off">
+        <span style="font-size:10px">⌘ K</span>
+      </label>
+      <div class="header-actions">
+        <button class="login" id="loginButton">Login</button>
+        <button class="cart-button" id="openCart" aria-label="Open shopping cart">
+          <span class="cart-count" id="cartCount">0</span>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 1.9-1.4L22 9H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="21" r="1" fill="currentColor"/><circle cx="18" cy="21" r="1" fill="currentColor"/></svg>
+          <span class="cart-label">My cart</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow"><span class="live-dot"></span> Your neighbourhood, on turbo</span>
+          <h1>Good stuff.<br><em>Good mood.</em><br>At your door.</h1>
+          <p>Everyday essentials, little cravings, and “oops, we’re out of chai” — sorted before the kettle boils.</p>
+          <a class="hero-cta" href="#shop">Get the good stuff <span>↗</span></a>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="produce-orbit">
+            <span class="produce-main">🥑</span>
+            <span class="float-produce float-one">🍋</span>
+            <span class="float-produce float-two">🥕</span>
+            <span class="float-produce float-three">🍅</span>
+            <span class="delivery-tag">⚡ <span><strong>10 min</strong><br>doorstep magic</span></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="perks" aria-label="Our promises">
+        <div class="perk"><span class="perk-icon">⚡</span><div><strong>At your door in minutes</strong><span>Quick enough to beat your cravings</span></div></div>
+        <div class="perk"><span class="perk-icon">🥬</span><div><strong>Freshness you can feel</strong><span>Handpicked, never just picked</span></div></div>
+        <div class="perk"><span class="perk-icon">🛵</span><div><strong>Free delivery over ₹199</strong><span>A little extra joy, on us</span></div></div>
+      </section>
+
+      <section aria-labelledby="categoryTitle">
+        <div class="section-heading">
+          <div><h2 id="categoryTitle">The little aisles</h2><p>Whatever you're in the mood for.</p></div>
+          <button class="text-link" id="clearCategory">See everything ↗</button>
+        </div>
+        <div class="category-row" id="categoryRow"></div>
+      </section>
+
+      <section id="shop" aria-labelledby="productTitle">
+        <div class="section-heading">
+          <div><h2 id="productTitle">Good picks, today</h2><p id="productSubtitle">A few things we think you'll love.</p></div>
+          <button class="text-link" id="surpriseButton">Surprise me ✨</button>
+        </div>
+        <div class="deal-strip">
+          <div class="deal-left"><span class="deal-spark">✳</span><div><strong>Little prices, big happy</strong><small>Show me the good deals (under ₹99)</small></div></div>
+          <button class="deal-toggle" id="dealToggle" aria-label="Show products under 99 rupees" aria-pressed="false"></button>
+        </div>
+        <div class="product-grid" id="productGrid"></div>
+      </section>
+
+      <section class="fresh-note">
+        <div><h2>A small note from the person who made this 🧑‍💻</h2><p>This is my little corner of the internet, built one late-night chai at a time. If you found a bug, it probably found me first. Thanks for being here — happy shopping!</p></div>
+        <span class="note-signature">made with ☕ & curiosity</span>
+      </section>
+    </main>
+    <footer><span><strong>blinkit</strong> · Good things, in a blink.</span><span>Made for practice, with a little extra love ✳</span></footer>
+  </div>
+
+  <div class="overlay" id="cartOverlay" aria-hidden="true">
+    <aside class="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+      <div class="drawer-head"><h2 id="cartTitle">Your little haul 🛍️</h2><button class="close-button" id="closeCart" aria-label="Close cart">×</button></div>
+      <div class="free-delivery" id="deliveryMessage">Add a little more to unlock free delivery over ₹199 ✨</div>
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-footer" id="cartFooter"></div>
+    </aside>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="mobile-cart" id="mobileCart"><div><strong id="mobileCartCount">0 items</strong><br><span id="mobileCartTotal">₹0</span></div><button id="mobileCartButton">View cart →</button></div>
+
+  <script>
+    const categories = [
+      { name: "All things", icon: "✳" },
+      { name: "Fresh picks", icon: "🥬" },
+      { name: "Dairy & eggs", icon: "🥛" },
+      { name: "Munchies", icon: "🍿" },
+      { name: "Drinks", icon: "🧃" },
+      { name: "Pantry", icon: "🍚" },
+      { name: "Sweet tooth", icon: "🍫" },
+      { name: "Home care", icon: "🧼" }
+    ];
+
+    const products = [
+      { id: 1, name: "Avocado, Hass", qty: "1 piece · ~200 g", price: 89, oldPrice: 119, category: "Fresh picks", badge: "Farm fresh", time: "8 min", image: "photo-1523049673857-eb18f1d7b578" },
+      { id: 2, name: "Amul Taaza Toned Milk", qty: "500 ml", price: 29, category: "Dairy & eggs", time: "8 min", image: "photo-1563636619-e9143da7973b" },
+      { id: 3, name: "Tender Coconut Water", qty: "Pack of 2 · 400 ml", price: 98, oldPrice: 120, category: "Drinks", badge: "Cool pick", time: "9 min", image: "photo-1543255006-d6395b6f1171" },
+      { id: 4, name: "Classic Salted Potato Chips", qty: "52 g", price: 20, category: "Munchies", time: "7 min", image: "photo-1566478989037-eec170784d0b" },
+      { id: 5, name: "Alphonso Mangoes", qty: "2 pieces · seasonal", price: 79, oldPrice: 99, category: "Fresh picks", badge: "In season", time: "10 min", image: "photo-1553279768-865429fa0078" },
+      { id: 6, name: "Farm Fresh Brown Eggs", qty: "Pack of 6", price: 64, category: "Dairy & eggs", time: "8 min", image: "photo-1518569656558-1f25e69d93d7" },
+      { id: 7, name: "Dark Chocolate, 70%", qty: "40 g · the good kind", price: 85, oldPrice: 99, category: "Sweet tooth", badge: "Little treat", time: "8 min", image: "photo-1511381939415-e44015466834" },
+      { id: 8, name: "Basmati Rice", qty: "1 kg · extra long grain", price: 129, category: "Pantry", time: "10 min", image: "photo-1586201375761-83865001e31c" },
+      { id: 9, name: "Hand-picked Baby Spinach", qty: "100 g", price: 35, category: "Fresh picks", time: "7 min", image: "photo-1576045057995-568f588f82fb" },
+      { id: 10, name: "Masala Chai, Instant", qty: "Pack of 10 sachets", price: 95, category: "Pantry", badge: "Chai o'clock", time: "9 min", image: "photo-1571934811356-5cc061b6821f" },
+      { id: 11, name: "Strawberry Yogurt", qty: "Cup · 100 g", price: 35, category: "Dairy & eggs", time: "8 min", image: "photo-1488477181946-6428a0291777" },
+      { id: 12, name: "Dishwash Liquid", qty: "Refill pack · 500 ml", price: 89, oldPrice: 105, category: "Home care", time: "10 min", image: "photo-1585421514284-efb74c2b69ba" }
+    ];
+
+    const cart = new Map();
+    const favorites = new Set();
+    let activeCategory = "All things";
+    let dealsOnly = false;
+    let toastTimer;
+    const grid = document.getElementById("productGrid");
+    const searchInput = document.getElementById("searchInput");
+
+    function renderCategories() {
+      document.getElementById("categoryRow").innerHTML = categories.map(category => `
+        <button class="category ${activeCategory === category.name ? "active" : ""}" data-category="${category.name}">
+          <span class="category-icon">${category.icon}</span>${category.name}
+        </button>`).join("");
+    }
+
+    function visibleProducts() {
+      const query = searchInput.value.trim().toLowerCase();
+      return products.filter(product => {
+        const categoryMatch = activeCategory === "All things" || product.category === activeCategory;
+        const searchMatch = !query || `${product.name} ${product.category} ${product.qty}`.toLowerCase().includes(query);
+        return categoryMatch && searchMatch && (!dealsOnly || product.price < 100);
+      });
+    }
+
+    function renderProducts() {
+      const items = visibleProducts();
+      document.getElementById("productSubtitle").textContent = searchInput.value.trim()
+        ? `A little something for “${searchInput.value.trim()}”.`
+        : dealsOnly ? "All the happy little finds under ₹99." : "A few things we think you'll love.";
+      if (!items.length) {
+        grid.innerHTML = `<div class="empty-state"><strong>No finds just yet 🥺</strong>Try another search or peek at all the aisles.</div>`;
+        return;
+      }
+      grid.innerHTML = items.map(product => `
+        <article class="product-card">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/${product.image}?auto=format&fit=crop&w=520&q=80" alt="${product.name}" loading="lazy">
+            ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ""}
+            <button class="favorite ${favorites.has(product.id) ? "saved" : ""}" data-favorite="${product.id}" aria-label="${favorites.has(product.id) ? "Remove from" : "Add to"} favourites">${favorites.has(product.id) ? "♥" : "♡"}</button>
+          </div>
+          <div class="product-info">
+            <div class="product-time"><span>●</span> ${product.time} delivery</div>
+            <h3>${product.name}</h3>
+            <span class="product-qty">${product.qty}</span>
+            <div class="product-bottom">
+              <span class="price">₹${product.price}${product.oldPrice ? `<span class="old-price">₹${product.oldPrice}</span>` : ""}</span>
+              <button class="add-button" data-add="${product.id}">${cart.get(product.id) ? `ADD +${cart.get(product.id)}` : "ADD"}</button>
+            </div>
+          </div>
+        </article>`).join("");
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2100);
+    }
+
+    function cartCount() {
+      return [...cart.values()].reduce((total, quantity) => total + quantity, 0);
+    }
+
+    function cartTotal() {
+      return [...cart.entries()].reduce((total, [id, quantity]) => {
+        const product = products.find(item => item.id === id);
+        return total + product.price * quantity;
+      }, 0);
+    }
+
+    function renderCart() {
+      const count = cartCount();
+      const total = cartTotal();
+      document.getElementById("cartCount").textContent = count;
+      document.getElementById("cartCount").classList.toggle("visible", count > 0);
+      document.getElementById("mobileCart").classList.toggle("show", count > 0);
+      document.getElementById("mobileCartCount").textContent = `${count} ${count === 1 ? "item" : "items"}`;
+      document.getElementById("mobileCartTotal").textContent = `₹${total}`;
+      document.getElementById("deliveryMessage").textContent = total >= 199
+        ? "Lovely! You unlocked free delivery ✨"
+        : `Add ₹${199 - total} more to unlock free delivery over ₹199 ✨`;
+
+      const itemsContainer = document.getElementById("cartItems");
+      const footer = document.getElementById("cartFooter");
+      if (!count) {
+        itemsContainer.innerHTML = `<div class="cart-empty"><span>🧺</span><strong>Your cart is having a quiet day</strong>Add a little something to brighten it up.</div>`;
+        footer.innerHTML = "";
+      } else {
+        itemsContainer.innerHTML = [...cart.entries()].map(([id, quantity]) => {
+          const product = products.find(item => item.id === id);
+          return `<div class="cart-row">
+            <img src="https://images.unsplash.com/${product.image}?auto=format&fit=crop&w=120&q=70" alt="">
+            <div><strong>${product.name}</strong><small>₹${product.price} · ${product.qty}</small></div>
+            <div class="quantity-control"><button data-quantity="${id}" data-change="-1" aria-label="Remove one">−</button><span>${quantity}</span><button data-quantity="${id}" data-change="1" aria-label="Add one">+</button></div>
+          </div>`;
+        }).join("");
+        const delivery = total >= 199 ? 0 : 25;
+        footer.innerHTML = `<div class="bill-row"><span>Item total</span><span>₹${total}</span></div>
+          <div class="bill-row"><span>Delivery ${delivery === 0 ? "(free!)" : ""}</span><span>${delivery ? `₹${delivery}` : "₹0"}</span></div>
+          <div class="bill-row total"><span>To pay</span><span>₹${total + delivery}</span></div>
+          <button class="checkout" id="checkoutButton"><span>Checkout · ${count} ${count === 1 ? "item" : "items"}</span><span>₹${total + delivery} →</span></button>`;
+      }
+      renderProducts();
+    }
+
+    function addToCart(id, amount = 1) {
+      cart.set(id, (cart.get(id) || 0) + amount);
+      renderCart();
+      const product = products.find(item => item.id === id);
+      showToast(`${product.name} added to your little haul ✨`);
+    }
+
+    function changeQuantity(id, amount) {
+      const next = (cart.get(id) || 0) + amount;
+      if (next <= 0) cart.delete(id);
+      else cart.set(id, next);
+      renderCart();
+    }
+
+    function openCart() {
+      const overlay = document.getElementById("cartOverlay");
+      overlay.classList.add("open");
+      overlay.setAttribute("aria-hidden", "false");
+      document.getElementById("closeCart").focus();
+    }
+
+    function closeCart() {
+      const overlay = document.getElementById("cartOverlay");
+      overlay.classList.remove("open");
+      overlay.setAttribute("aria-hidden", "true");
+    }
+
+    document.getElementById("categoryRow").addEventListener("click", event => {
+      const button = event.target.closest("[data-category]");
+      if (!button) return;
+      activeCategory = button.dataset.category;
+      renderCategories();
+      renderProducts();
+    });
+    document.getElementById("clearCategory").addEventListener("click", () => {
+      activeCategory = "All things";
+      dealsOnly = false;
+      document.getElementById("dealToggle").classList.remove("on");
+      document.getElementById("dealToggle").setAttribute("aria-pressed", "false");
+      searchInput.value = "";
+      renderCategories();
+      renderProducts();
+    });
+    grid.addEventListener("click", event => {
+      const addButton = event.target.closest("[data-add]");
+      const favoriteButton = event.target.closest("[data-favorite]");
+      if (addButton) addToCart(Number(addButton.dataset.add));
+      if (favoriteButton) {
+        const id = Number(favoriteButton.dataset.favorite);
+        favorites.has(id) ? favorites.delete(id) : favorites.add(id);
+        renderProducts();
+        if (favorites.has(id)) showToast("Saved for your next little craving ♥");
+      }
+    });
+    document.getElementById("cartItems").addEventListener("click", event => {
+      const button = event.target.closest("[data-quantity]");
+      if (button) changeQuantity(Number(button.dataset.quantity), Number(button.dataset.change));
+    });
+    searchInput.addEventListener("input", renderProducts);
+    document.getElementById("dealToggle").addEventListener("click", event => {
+      dealsOnly = !dealsOnly;
+      event.currentTarget.classList.toggle("on", dealsOnly);
+      event.currentTarget.setAttribute("aria-pressed", String(dealsOnly));
+      renderProducts();
+    });
+    document.getElementById("surpriseButton").addEventListener("click", () => {
+      const options = visibleProducts();
+      if (!options.length) {
+        showToast("Nothing to surprise you with just yet — try another aisle!");
+        return;
+      }
+      const product = options[Math.floor(Math.random() * options.length)];
+      addToCart(product.id);
+    });
+    document.getElementById("openCart").addEventListener("click", openCart);
+    document.getElementById("mobileCartButton").addEventListener("click", openCart);
+    document.getElementById("closeCart").addEventListener("click", closeCart);
+    document.getElementById("cartOverlay").addEventListener("click", event => {
+      if (event.target.id === "cartOverlay") closeCart();
+    });
+    document.getElementById("cartFooter").addEventListener("click", event => {
+      if (event.target.closest("#checkoutButton")) showToast("Checkout is a little demo magic for now ✨");
+    });
+    document.getElementById("loginButton").addEventListener("click", () => showToast("Login is coming soon — thanks for stopping by!"));
+    document.getElementById("locationButton").addEventListener("click", () => showToast("Delivering to sunny Indiranagar, Bengaluru 📍"));
+    document.addEventListener("keydown", event => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchInput.focus();
+      }
+      if (event.key === "Escape") closeCart();
+    });
+
+    renderCategories();
+    renderCart();
+  </script>
+</body>
+</html>
